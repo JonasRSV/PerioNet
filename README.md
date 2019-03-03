@@ -17,6 +17,9 @@ In all the examples below the NNs were trained 100 times on the observed data us
 
 the "Classic" is the regular NN in the plots
 
+see 
+- [notebook](https://github.com/JonasRSV/PerioNet/blob/master/perionet/examples/Untitled.ipynb) to test any functions
+
 
 #### sin(x)
 
