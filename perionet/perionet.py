@@ -32,8 +32,10 @@ class perioInit(tf.keras.initializers.Initializer):
 
 def perioNet(inputs: tf.Tensor,
              order: int,
+             smoothing: float,
              periodicity_initializer: tf.initializers = perioInit(),
-             amplitude_initializer: tf.initializers = tf.initializers.glorot_uniform()):
+             amplitude_initializer: tf.initializers = tf.initializers.
+             glorot_uniform()):
     if inputs.shape.ndims != 2:
         raise Exception(
             "perioNet expects a tensor of 2 dimensions - {} was given".format(
@@ -43,10 +45,9 @@ def perioNet(inputs: tf.Tensor,
     """ Not quite sure what the appropriate way of doing this is.. but for a hobby project this will do. """
     with tf.variable_scope(str(np.random.rand())):
         ts = tf.TensorShape([dims.value, order])
-        cos_perio = tf.get_variable(
-            "cos_periodicities", ts, initializer=periodicity_initializer)
-        sin_perio = tf.get_variable(
-            "sin_periodicities", ts, initializer=periodicity_initializer)
+        perio = tf.get_variable(
+            "cos_periodicities", ts,
+            initializer=periodicity_initializer) / smoothing
         cos_ampli = tf.get_variable(
             "cos_amplitudes", ts, initializer=amplitude_initializer)
         sin_ampli = tf.get_variable(
@@ -54,20 +55,17 @@ def perioNet(inputs: tf.Tensor,
 
         ins = tf.split(inputs, dims.value, 1)
 
-        cos_perio = tf.split(cos_perio, dims.value, 0)
-        sin_perio = tf.split(sin_perio, dims.value, 0)
+        perio = tf.split(perio, dims.value, 0)
         cos_ampli = tf.split(cos_ampli, dims.value, 0)
         sin_ampli = tf.split(sin_ampli, dims.value, 0)
 
         outs = []
-        for i, cos_p, sin_p, cos_a, sin_a in zip(ins, cos_perio, sin_perio,
-                                                 cos_ampli, sin_ampli):
+        for i, p, cos_a, sin_a in zip(ins, perio, cos_ampli, sin_ampli):
 
             outs.append(
                 tf.expand_dims(
-                    tf.reduce_sum(cos_a * tf.math.cos(i * cos_p * np.pi) +
-                                  sin_a * tf.math.sin(i * sin_p * np.pi), 1),
-                    1))
+                    tf.reduce_sum(cos_a * tf.math.cos(i * p * np.pi) +
+                                  sin_a * tf.math.sin(i * p * np.pi), 1), 1))
 
         outs = tf.concat(outs, 1)
 
