@@ -2,13 +2,38 @@ import tensorflow as tf
 import numpy as np
 
 
-def perioNet(
-        inputs: tf.Tensor,
-        order: int,
-        periodicity_initializer: tf.initializers = tf.initializers.
-        glorot_normal(),
-        amplitude_initializer: tf.initializers = tf.initializers.glorot_normal(
-        )):
+class perioInit(tf.keras.initializers.Initializer):
+    def __init__(self):
+        pass
+
+    def __call__(self, shape, dtype=None, partition_info=None):
+        dim = None
+        order = None
+        if isinstance(shape, tf.TensorShape):
+            if shape.ndims != 2:
+                raise Exception(
+                    "PerioInit Expects shape of dim 2 - {} was given".format(
+                        shape.ndims))
+
+            dim = shape.dims[0].value
+            order = shape.dims[1].value
+        else:
+            if len(shape) != 2:
+                raise Exception(
+                    "PerioInit Expects shape of dim 2 - {} was given".format(
+                        shape.ndims))
+
+            dim = shape[0]
+            order = shape[1]
+
+        return tf.Variable(
+            np.array([np.arange(order) for _ in range(dim)]), dtype=dtype)
+
+
+def perioNet(inputs: tf.Tensor,
+             order: int,
+             periodicity_initializer: tf.initializers = perioInit(),
+             amplitude_initializer: tf.initializers = tf.initializers.glorot_uniform()):
     if inputs.shape.ndims != 2:
         raise Exception(
             "perioNet expects a tensor of 2 dimensions - {} was given".format(
